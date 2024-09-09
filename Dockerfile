@@ -1,25 +1,31 @@
-# Start from the official MeiliSearch image
+# Start from the official MeiliSearch image, based on Alpine Linux
 FROM getmeili/meilisearch:latest
 
-# Install Python for indexing script
-RUN apt-get update && apt-get install -y python3 python3-pip
+# Install Python3, Pip, Virtualenv, and Nginx
+RUN apk add --no-cache python3 py3-pip py3-virtualenv nginx
 
-# Install the MeiliSearch Python client
-RUN pip3 install meilisearch
+# Create a virtual environment
+RUN python3 -m venv /opt/venv
 
-# Copy the front-end UI (search interface) to a directory that can be served
+# Activate the virtual environment and install MeiliSearch client
+RUN /opt/venv/bin/pip install meilisearch
+
+# Copy the front-end UI (search interface) to the Nginx default directory
 COPY search_interface /usr/share/nginx/html
 
 # Copy the Python script for indexing files
 COPY index_files.py /usr/local/bin/index_files.py
 
-# Copy Nginx configuration file to override the default config
+# Copy the Nginx configuration file
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Expose MeiliSearch on port 7700
+# Activate the virtual environment by default
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Expose MeiliSearch on port 7700 and Nginx on port 80
 EXPOSE 7700 80
 
-# Start MeiliSearch and Nginx concurrently and ensure the Python script runs before starting Nginx
+# Start MeiliSearch, run the indexing script, and start Nginx
 CMD meilisearch --http-addr 0.0.0.0:7700 & \
     python3 /usr/local/bin/index_files.py /documents && \
     nginx -g 'daemon off;'
