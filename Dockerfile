@@ -26,6 +26,6 @@ ENV PATH="/opt/venv/bin:$PATH"
 EXPOSE 7700 80
 
 # Start MeiliSearch, run the indexing script, and start Nginx
-CMD meilisearch --http-addr 0.0.0.0:7700 & \
+CMD meilisearch --http-addr 0.0.0.0:7700 --master-key & \
     python3 /usr/local/bin/index_files.py /documents && \
     nginx -g 'daemon off;'
